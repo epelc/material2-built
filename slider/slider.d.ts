@@ -1,5 +1,8 @@
-import { ModuleWithProviders, ElementRef, EventEmitter, AfterContentInit } from '@angular/core';
+import { ElementRef, EventEmitter, OnDestroy, Renderer } from '@angular/core';
 import { ControlValueAccessor } from '@angular/forms';
+import { HammerInput } from '../core';
+import { Dir } from '../core/rtl/dir';
+import { FocusOriginMonitor } from '../core/style/focus-origin-monitor';
 /**
  * Provider Expression that allows md-slider to register as a ControlValueAccessor.
  * This allows it to support [(ngModel)] and [formControl].
@@ -7,141 +10,181 @@ import { ControlValueAccessor } from '@angular/forms';
 export declare const MD_SLIDER_VALUE_ACCESSOR: any;
 /** A simple change event emitted by the MdSlider component. */
 export declare class MdSliderChange {
+    /** The MdSlider that changed. */
     source: MdSlider;
+    /** Thew new value of the source slider. */
     value: number;
 }
-export declare class MdSlider implements AfterContentInit, ControlValueAccessor {
-    /** A renderer to handle updating the slider's thumb and fill track. */
-    private _renderer;
-    /** The dimensions of the slider. */
-    private _sliderDimensions;
-    private _disabled;
+/**
+ * Allows users to select from a range of values by moving the slider thumb. It is similar in
+ * behavior to the native `<input type="range">` element.
+ */
+export declare class MdSlider implements ControlValueAccessor, OnDestroy {
+    private _elementRef;
+    private _focusOriginMonitor;
+    private _dir;
+    /** Whether or not the slider is disabled. */
     disabled: boolean;
-    /** Whether or not to show the thumb label. */
-    private _thumbLabel;
-    thumbLabel: boolean;
-    /** The miniumum value that the slider can have. */
-    private _min;
+    private _disabled;
+    /** Whether the slider is inverted. */
+    invert: any;
+    private _invert;
     /** The maximum value that the slider can have. */
+    max: number;
     private _max;
-    /** The percentage of the slider that coincides with the value. */
-    private _percent;
-    private _controlValueAccessorChangeFn;
-    /** The last value for which a change event was emitted. */
-    private _lastEmittedValue;
-    /** onTouch function registered via registerOnTouch (ControlValueAccessor). */
-    onTouched: () => any;
+    /** The minimum value that the slider can have. */
+    min: number;
+    private _min;
     /** The values at which the thumb will snap. */
     step: number;
+    private _step;
+    /** Whether or not to show the thumb label. */
+    thumbLabel: boolean;
+    private _thumbLabel;
+    /** @deprecated */
+    _thumbLabelDeprecated: boolean;
     /**
      * How often to show ticks. Relative to the step so that a tick always appears on a step.
      * Ex: Tick interval of 4 with a step of 3 will draw a tick every 4 steps (every 12 values).
      */
-    _tickInterval: 'auto' | number;
+    tickInterval: number | "auto";
+    private _tickInterval;
+    /** @deprecated */
+    _tickIntervalDeprecated: number | "auto";
+    /** Value of the slider. */
+    value: number;
+    private _value;
+    /** Whether the slider is vertical. */
+    vertical: any;
+    private _vertical;
+    /** Event emitted when the slider value has changed. */
+    change: EventEmitter<MdSliderChange>;
+    /** Event emitted when the slider thumb moves. */
+    input: EventEmitter<MdSliderChange>;
+    /** The value to be used for display purposes. */
+    readonly displayValue: string | number;
+    /** onTouch function registered via registerOnTouch (ControlValueAccessor). */
+    onTouched: () => any;
+    /** The percentage of the slider that coincides with the value. */
+    readonly percent: number;
+    private _percent;
     /**
      * Whether or not the thumb is sliding.
      * Used to determine if there should be a transition for the thumb and fill track.
-     * TODO: internal
      */
-    isSliding: boolean;
+    _isSliding: boolean;
     /**
      * Whether or not the slider is active (clicked or sliding).
      * Used to shrink and grow the thumb as according to the Material Design spec.
-     * TODO: internal
      */
-    isActive: boolean;
-    /** Indicator for if the value has been set or not. */
-    private _isInitialized;
-    /** Value of the slider. */
-    private _value;
-    min: number;
-    max: number;
-    value: number;
-    change: EventEmitter<MdSliderChange>;
-    constructor(elementRef: ElementRef);
+    _isActive: boolean;
     /**
-     * Once the slider has rendered, grab the dimensions and update the position of the thumb and
-     * fill track.
-     * TODO: internal
+     * Whether the axis of the slider is inverted.
+     * (i.e. whether moving the thumb in the positive x or y direction decreases the slider's value).
      */
-    ngAfterContentInit(): void;
-    /** TODO: internal */
-    onClick(event: MouseEvent): void;
-    /** TODO: internal */
-    onSlide(event: HammerInput): void;
-    /** TODO: internal */
-    onSlideStart(event: HammerInput): void;
-    /** TODO: internal */
-    onSlideEnd(): void;
-    /** TODO: internal */
-    onResize(): void;
-    /** TODO: internal */
-    onBlur(): void;
+    readonly _invertAxis: any;
+    /** Whether the slider is at its minimum value. */
+    readonly _isMinValue: boolean;
     /**
-     * When the value changes without a physical position, the percentage needs to be recalculated
-     * independent of the physical location.
-     * This is also used to move the thumb to a snapped value once sliding is done.
+     * The amount of space to leave between the slider thumb and the track fill & track background
+     * elements.
      */
-    updatePercentFromValue(): void;
+    readonly _thumbGap: number;
+    /** CSS styles for the track background element. */
+    readonly _trackBackgroundStyles: {
+        [key: string]: string;
+    };
+    /** CSS styles for the track fill element. */
+    readonly _trackFillStyles: {
+        [key: string]: string;
+    };
+    /** CSS styles for the ticks container element. */
+    readonly _ticksContainerStyles: {
+        [key: string]: string;
+    };
+    /** CSS styles for the ticks element. */
+    readonly _ticksStyles: {
+        [key: string]: string;
+    };
+    readonly _thumbContainerStyles: {
+        [key: string]: string;
+    };
+    /** The size of a tick interval as a percentage of the size of the track. */
+    private _tickIntervalPercent;
+    /** A renderer to handle updating the slider's thumb and fill track. */
+    private _renderer;
+    /** The dimensions of the slider. */
+    private _sliderDimensions;
+    private _controlValueAccessorChangeFn;
+    /** The last value for which a change event was emitted. */
+    private _lastChangeValue;
+    /** The last value for which an input event was emitted. */
+    private _lastInputValue;
+    /** Decimal places to round to, based on the step amount. */
+    private _roundLabelTo;
     /**
-     * Calculate the new value from the new physical location. The value will always be snapped.
+     * Whether mouse events should be converted to a slider position by calculating their distance
+     * from the right or bottom edge of the slider as opposed to the top or left.
      */
-    updateValueFromPosition(pos: number): void;
-    /**
-     * Snaps the thumb to the current value.
-     * Called after a click or drag event is over.
-     */
-    snapThumbToValue(): void;
+    private readonly _invertMouseCoords;
+    /** The language direction for this slider element. */
+    private readonly _direction;
+    constructor(renderer: Renderer, _elementRef: ElementRef, _focusOriginMonitor: FocusOriginMonitor, _dir: Dir);
+    ngOnDestroy(): void;
+    _onMouseenter(): void;
+    _onClick(event: MouseEvent): void;
+    _onSlide(event: HammerInput): void;
+    _onSlideStart(event: HammerInput): void;
+    _onSlideEnd(): void;
+    _onFocus(): void;
+    _onBlur(): void;
+    _onKeydown(event: KeyboardEvent): void;
+    _onKeyup(): void;
+    /** Increments the slider by the given number of steps (negative number decrements). */
+    private _increment(numSteps);
+    /** Calculate the new value from the new physical location. The value will always be snapped. */
+    private _updateValueFromPosition(pos);
     /** Emits a change event if the current value is different from the last emitted value. */
     private _emitValueIfChanged();
+    /** Emits an input event when the current value is different from the last emitted value. */
+    private _emitInputEvent();
+    /** Updates the amount of space between ticks as a percentage of the width of the slider. */
+    private _updateTickIntervalPercent();
+    /** Creates a slider change object from the specified value. */
+    private _createChangeEvent(value?);
+    /** Calculates the percentage of the slider that a value is. */
+    private _calculatePercentage(value);
+    /** Calculates the value a percentage of the slider corresponds to. */
+    private _calculateValue(percentage);
+    /** Return a number between two numbers. */
+    private _clamp(value, min?, max?);
     /**
-     * Calculates the separation in pixels of tick marks. If there is no tick interval or the interval
-     * is set to something other than a number or 'auto', nothing happens.
-     */
-    private _updateTickSeparation();
-    /**
-     * Calculates the optimal separation in pixels of tick marks based on the minimum auto tick
-     * separation constant.
-     */
-    private _updateAutoTickSeparation();
-    /**
-     * Calculates the separation of tick marks by finding the pixel value of the tickInterval.
-     */
-    private _updateTickSeparationFromInterval();
-    /**
-     * Calculates the percentage of the slider that a value is.
-     */
-    calculatePercentage(value: number): number;
-    /**
-     * Calculates the value a percentage of the slider corresponds to.
-     */
-    calculateValue(percentage: number): number;
-    /**
-     * Return a number between two numbers.
-     */
-    clamp(value: number, min?: number, max?: number): number;
-    /**
-     * Implemented as part of ControlValueAccessor.
-     * TODO: internal
+     * Sets the model value. Implemented as part of ControlValueAccessor.
+     * @param value
      */
     writeValue(value: any): void;
     /**
+     * Registers a callback to eb triggered when the value has changed.
      * Implemented as part of ControlValueAccessor.
-     * TODO: internal
+     * @param fn Callback to be registered.
      */
     registerOnChange(fn: (value: any) => void): void;
     /**
+     * Registers a callback to be triggered when the component is touched.
      * Implemented as part of ControlValueAccessor.
-     * TODO: internal
+     * @param fn Callback to be registered.
      */
     registerOnTouched(fn: any): void;
     /**
-    * Implemented as part of ControlValueAccessor
-    */
+     * Sets whether the component should be disabled.
+     * Implemented as part of ControlValueAccessor.
+     * @param isDisabled
+     */
     setDisabledState(isDisabled: boolean): void;
 }
 /**
  * Renderer class in order to keep all dom manipulation in one place and outside of the main class.
+ * @docs-private
  */
 export declare class SliderRenderer {
     private _sliderElement;
@@ -153,19 +196,8 @@ export declare class SliderRenderer {
      */
     getSliderDimensions(): ClientRect;
     /**
-     * Update the physical position of the thumb and fill track on the slider.
-     */
-    updateThumbAndFillPosition(percent: number, width: number): void;
-    /**
      * Focuses the native element.
      * Currently only used to allow a blur event to fire but will be used with keyboard input later.
      */
     addFocus(): void;
-    /**
-     * Draws ticks onto the tick container.
-     */
-    drawTicks(tickSeparation: number): void;
-}
-export declare class MdSliderModule {
-    static forRoot(): ModuleWithProviders;
 }

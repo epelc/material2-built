@@ -1,36 +1,70 @@
-import { ElementRef, Renderer, ModuleWithProviders } from '@angular/core';
-export declare class MdButton {
+import { ElementRef, OnDestroy, Renderer } from '@angular/core';
+import { FocusOriginMonitor } from '../core';
+/**
+ * Directive whose purpose is to add the mat- CSS styling to this selector.
+ * @docs-private
+ */
+export declare class MdButtonCssMatStyler {
+}
+/**
+ * Directive whose purpose is to add the mat- CSS styling to this selector.
+ * @docs-private
+ */
+export declare class MdRaisedButtonCssMatStyler {
+}
+/**
+ * Directive whose purpose is to add the mat- CSS styling to this selector.
+ * @docs-private
+ */
+export declare class MdIconButtonCssMatStyler {
+}
+/**
+ * Directive whose purpose is to add the mat- CSS styling to this selector.
+ * @docs-private
+ */
+export declare class MdFabCssMatStyler {
+}
+/**
+ * Directive whose purpose is to add the mat- CSS styling to this selector.
+ * @docs-private
+ */
+export declare class MdMiniFabCssMatStyler {
+}
+/**
+ * Material design button.
+ */
+export declare class MdButton implements OnDestroy {
     private _elementRef;
     private _renderer;
+    private _focusOriginMonitor;
     private _color;
-    /** Whether the button has focus from the keyboard (not the mouse). Used for class binding. */
-    _isKeyboardFocused: boolean;
-    /** Whether a mousedown has occurred on this element in the last 100ms. */
-    _isMouseDown: boolean;
+    /** Whether the button is round. */
+    _isRoundButton: boolean;
     /** Whether the ripple effect on click should be disabled. */
     private _disableRipple;
+    private _disabled;
+    /** Whether the ripple effect for this button is disabled. */
     disableRipple: boolean;
-    constructor(_elementRef: ElementRef, _renderer: Renderer);
+    /** Whether the button is disabled. */
+    disabled: boolean;
+    constructor(_elementRef: ElementRef, _renderer: Renderer, _focusOriginMonitor: FocusOriginMonitor);
+    ngOnDestroy(): void;
+    /** The color of the button. Can be `primary`, `accent`, or `warn`. */
     color: string;
-    _setMousedown(): void;
     _updateColor(newColor: string): void;
     _setElementColor(color: string, isAdd: boolean): void;
-    _setKeyboardFocus(): void;
-    _removeKeyboardFocus(): void;
-    /** TODO(hansl): e2e test this function. */
+    /** Focuses the button. */
     focus(): void;
-    getHostElement(): any;
-    isRoundButton(): any;
-    isRippleEnabled(): boolean;
+    _getHostElement(): any;
+    _isRippleDisabled(): boolean;
 }
+/**
+ * Raised Material design button.
+ */
 export declare class MdAnchor extends MdButton {
-    _disabled: boolean;
-    constructor(elementRef: ElementRef, renderer: Renderer);
+    constructor(elementRef: ElementRef, renderer: Renderer, focusOriginMonitor: FocusOriginMonitor);
+    /** @docs-private */
     readonly tabIndex: number;
-    readonly isAriaDisabled: string;
-    disabled: boolean;
+    readonly _isAriaDisabled: string;
     _haltDisabledEvents(event: Event): void;
-}
-export declare class MdButtonModule {
-    static forRoot(): ModuleWithProviders;
 }

@@ -1,7 +1,8 @@
-import { ModuleWithProviders, ElementRef, OnChanges, OnInit, Renderer, SimpleChange, AfterViewChecked } from '@angular/core';
+import { ElementRef, OnChanges, OnInit, Renderer, SimpleChange, AfterViewChecked, Optional } from '@angular/core';
+import { Http } from '@angular/http';
+import { DomSanitizer } from '@angular/platform-browser';
 import { MdError } from '../core';
 import { MdIconRegistry } from './icon-registry';
-export { MdIconRegistry } from './icon-registry';
 /** Exception thrown when an invalid icon name is passed to an md-icon component. */
 export declare class MdIconInvalidNameError extends MdError {
     constructor(iconName: string);
@@ -40,18 +41,28 @@ export declare class MdIconInvalidNameError extends MdError {
  *     <md-icon fontSet="fa" fontIcon="alarm"></md-icon>
  */
 export declare class MdIcon implements OnChanges, OnInit, AfterViewChecked {
-    private _element;
+    private _elementRef;
     private _renderer;
     private _mdIconRegistry;
-    svgSrc: string;
+    private _color;
+    /** Name of the icon in the SVG icon set. */
     svgIcon: string;
+    /** Font set that the icon is a part of. */
     fontSet: string;
+    /** Name of an icon within a font set. */
     fontIcon: string;
+    /** Alt label to be used for accessibility. */
     alt: string;
+    /** Screenreader label for the icon. */
     hostAriaLabel: string;
+    /** Color of the icon. */
+    color: string;
     private _previousFontSetClass;
     private _previousFontIconClass;
-    constructor(_element: ElementRef, _renderer: Renderer, _mdIconRegistry: MdIconRegistry);
+    private _previousAriaLabel;
+    constructor(_elementRef: ElementRef, _renderer: Renderer, _mdIconRegistry: MdIconRegistry);
+    _updateColor(newColor: string): void;
+    _setElementColor(color: string, isAdd: boolean): void;
     /**
      * Splits an svgIcon binding value into its icon set and icon name components.
      * Returns a 2-element array of [(icon set), (icon name)].
@@ -66,13 +77,10 @@ export declare class MdIcon implements OnChanges, OnInit, AfterViewChecked {
      *   'a:b:c' -> (throws MdIconInvalidNameError)
      */
     private _splitIconName(iconName);
-    /** TODO: internal */
     ngOnChanges(changes: {
         [propertyName: string]: SimpleChange;
     }): void;
-    /** TODO: internal */
     ngOnInit(): void;
-    /** TODO: internal */
     ngAfterViewChecked(): void;
     private _updateAriaLabel();
     private _getAriaLabel();
@@ -80,6 +88,9 @@ export declare class MdIcon implements OnChanges, OnInit, AfterViewChecked {
     private _setSvgElement(svg);
     private _updateFontIconClasses();
 }
-export declare class MdIconModule {
-    static forRoot(): ModuleWithProviders;
-}
+export declare function ICON_REGISTRY_PROVIDER_FACTORY(parentRegistry: MdIconRegistry, http: Http, sanitizer: DomSanitizer): MdIconRegistry;
+export declare const ICON_REGISTRY_PROVIDER: {
+    provide: typeof MdIconRegistry;
+    deps: (Optional[] | typeof Http | typeof DomSanitizer)[];
+    useFactory: (parentRegistry: MdIconRegistry, http: Http, sanitizer: DomSanitizer) => MdIconRegistry;
+};

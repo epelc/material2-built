@@ -1,7 +1,7 @@
-import { AnimationEntryMetadata } from '@angular/core';
+import { AnimationTriggerMetadata } from '@angular/animations';
 /**
  * Below are all the animations for the md-menu component.
- * Animation duration and timing values are based on Material 1.
+ * Animation duration and timing values are based on AngularJS Material.
  */
 /**
  * This animation controls the menu panel's entry and exit from the page.
@@ -10,12 +10,10 @@ import { AnimationEntryMetadata } from '@angular/core';
  *
  * When the menu panel is removed from the DOM, it simply fades out after a brief
  * delay to display the ripple.
- *
- * TODO(kara): switch to :enter and :leave once Mobile Safari is sorted out.
  */
-export declare const transformMenu: AnimationEntryMetadata;
+export declare const transformMenu: AnimationTriggerMetadata;
 /**
  * This animation fades in the background color and content of the menu panel
  * after its containing element is scaled in.
  */
-export declare const fadeInItems: AnimationEntryMetadata;
+export declare const fadeInItems: AnimationTriggerMetadata;

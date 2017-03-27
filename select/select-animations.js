@@ -1,26 +1,27 @@
-import { animate, state, style, transition, trigger } from '@angular/core';
+import { animate, state, style, transition, trigger, } from '@angular/animations';
 /**
  * The following are all the animations for the md-select component, with each
  * const containing the metadata for one animation.
  *
- * The values below match the implementation of the Material 1 md-select animation.
+ * The values below match the implementation of the AngularJS Material md-select animation.
  */
 /**
  * This animation shrinks the placeholder text to 75% of its normal size and translates
  * it to either the top left corner (ltr) or top right corner (rtl) of the trigger,
  * depending on the text direction of the application.
  */
-export var transformPlaceholder = trigger('transformPlaceholder', [
-    state('normal', style({
-        transform: "translate3d(0, 0, 0) scale(1)"
-    })),
+export const /** @type {?} */ transformPlaceholder = trigger('transformPlaceholder', [
     state('floating-ltr', style({
-        transform: "translate3d(-2px, -22px, 0) scale(0.75)"
+        top: '-22px',
+        left: '-2px',
+        transform: `scale(0.75)`
     })),
     state('floating-rtl', style({
-        transform: "translate3d(2px, -22px, 0) scale(0.75)"
+        top: '-22px',
+        left: '2px',
+        transform: `scale(0.75)`
     })),
-    transition('* => *', animate("400ms cubic-bezier(0.25, 0.8, 0.25, 1)"))
+    transition('* => *', animate(`400ms cubic-bezier(0.25, 0.8, 0.25, 1)`))
 ]);
 /**
  * This animation transforms the select's overlay panel on and off the page.
@@ -31,24 +32,19 @@ export var transformPlaceholder = trigger('transformPlaceholder', [
  *
  * When the panel is removed from the DOM, it simply fades out linearly.
  */
-export var transformPanel = trigger('transformPanel', [
-    state('showing-ltr', style({
+export const /** @type {?} */ transformPanel = trigger('transformPanel', [
+    state('showing', style({
         opacity: 1,
-        width: 'calc(100% + 32px)',
-        transform: "translate3d(-16px, -9px, 0) scaleY(1)"
-    })),
-    state('showing-rtl', style({
-        opacity: 1,
-        width: 'calc(100% + 32px)',
-        transform: "translate3d(16px, -9px, 0) scaleY(1)"
+        minWidth: 'calc(100% + 32px)',
+        transform: `scaleY(1)`
     })),
     transition('void => *', [
         style({
             opacity: 0,
-            width: '100%',
-            transform: "translate3d(0, 0, 0) scaleY(0)"
+            minWidth: '100%',
+            transform: `scaleY(0)`
         }),
-        animate("150ms cubic-bezier(0.25, 0.8, 0.25, 1)")
+        animate(`150ms cubic-bezier(0.25, 0.8, 0.25, 1)`)
     ]),
     transition('* => void', [
         animate('250ms 100ms linear', style({ opacity: 0 }))
@@ -59,12 +55,11 @@ export var transformPanel = trigger('transformPanel', [
  * select's options. It is time delayed to occur 100ms after the overlay
  * panel has transformed in.
  */
-export var fadeInContent = trigger('fadeInContent', [
+export const /** @type {?} */ fadeInContent = trigger('fadeInContent', [
     state('showing', style({ opacity: 1 })),
     transition('void => showing', [
         style({ opacity: 0 }),
-        animate("150ms 100ms cubic-bezier(0.55, 0, 0.55, 0.2)")
+        animate(`150ms 100ms cubic-bezier(0.55, 0, 0.55, 0.2)`)
     ])
 ]);
-
 //# sourceMappingURL=select-animations.js.map

@@ -1,65 +1,56 @@
-import { ElementRef } from '@angular/core';
-/** TODO: internal */
-export declare enum ForegroundRippleState {
-    NEW = 0,
-    EXPANDING = 1,
-    FADING_OUT = 2,
-}
-/**
- * Wrapper for a foreground ripple DOM element and its animation state.
- * TODO: internal
- */
-export declare class ForegroundRipple {
-    rippleElement: Element;
-    state: ForegroundRippleState;
-    constructor(rippleElement: Element);
-}
+import { ElementRef, NgZone } from '@angular/core';
+import { ViewportRuler } from '../overlay/position/viewport-ruler';
+import { RippleRef } from './ripple-ref';
+/** Fade-in duration for the ripples. Can be modified with the speedFactor option. */
+export declare const RIPPLE_FADE_IN_DURATION = 450;
+/** Fade-out duration for the ripples in milliseconds. This can't be modified by the speedFactor. */
+export declare const RIPPLE_FADE_OUT_DURATION = 400;
+export declare type RippleConfig = {
+    color?: string;
+    centered?: boolean;
+    radius?: number;
+    speedFactor?: number;
+    persistent?: boolean;
+};
 /**
  * Helper service that performs DOM manipulations. Not intended to be used outside this module.
  * The constructor takes a reference to the ripple directive's host element and a map of DOM
  * event handlers to be installed on the element that triggers ripple animations.
  * This will eventually become a custom renderer once Angular support exists.
- * TODO: internal
+ * @docs-private
  */
 export declare class RippleRenderer {
-    private _eventHandlers;
-    private _backgroundDiv;
-    private _rippleElement;
+    private _ngZone;
+    private _ruler;
+    /** Element where the ripples are being added to. */
+    private _containerElement;
+    /** Element which triggers the ripple elements on mouse events. */
     private _triggerElement;
-    constructor(_elementRef: ElementRef, _eventHandlers: Map<string, (e: Event) => void>);
-    /**
-     * Installs event handlers on the given trigger element, and removes event handlers from the
-     * previous trigger if needed.
-     */
-    setTriggerElement(newTrigger: HTMLElement): void;
-    /**
-     * Installs event handlers on the host element of the md-ripple directive.
-     */
-    setTriggerElementToHost(): void;
-    /**
-     * Removes event handlers from the current trigger element if needed.
-     */
-    clearTriggerElement(): void;
-    /**
-     * Creates a foreground ripple and sets its animation to expand and fade in from the position
-     * given by rippleOriginLeft and rippleOriginTop (or from the center of the <md-ripple>
-     * bounding rect if centered is true).
-     */
-    createForegroundRipple(rippleOriginLeft: number, rippleOriginTop: number, color: string, centered: boolean, radius: number, speedFactor: number, transitionEndCallback: (r: ForegroundRipple, e: TransitionEvent) => void): void;
-    /**
-     * Fades out a foreground ripple after it has fully expanded and faded in.
-     */
-    fadeOutForegroundRipple(ripple: Element): void;
-    /**
-     * Removes a foreground ripple from the DOM after it has faded out.
-     */
-    removeRippleFromDom(ripple: Element): void;
-    /**
-     * Fades in the ripple background.
-     */
-    fadeInRippleBackground(color: string): void;
-    /**
-     * Fades out the ripple background.
-     */
-    fadeOutRippleBackground(): void;
+    /** Whether the mouse is currently down or not. */
+    private _isMousedown;
+    /** Events to be registered on the trigger element. */
+    private _triggerEvents;
+    /** Set of currently active ripple references. */
+    private _activeRipples;
+    /** Ripple config for all ripples created by events. */
+    rippleConfig: RippleConfig;
+    /** Whether mouse ripples should be created or not. */
+    rippleDisabled: boolean;
+    constructor(_elementRef: ElementRef, _ngZone: NgZone, _ruler: ViewportRuler);
+    /** Fades in a ripple at the given coordinates. */
+    fadeInRipple(pageX: number, pageY: number, config?: RippleConfig): RippleRef;
+    /** Fades out a ripple reference. */
+    fadeOutRipple(rippleRef: RippleRef): void;
+    /** Fades out all currently active ripples. */
+    fadeOutAll(): void;
+    /** Sets the trigger element and registers the mouse events. */
+    setTriggerElement(element: HTMLElement): void;
+    /** Listener being called on mousedown event. */
+    private onMousedown(event);
+    /** Listener being called on mouseup event. */
+    private onMouseup();
+    /** Listener being called on mouseleave event. */
+    private onMouseLeave();
+    /** Runs a timeout outside of the Angular zone to avoid triggering the change detection. */
+    private runTimeoutOutsideZone(fn, delay?);
 }

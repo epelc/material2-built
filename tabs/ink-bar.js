@@ -1,50 +1,85 @@
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
 import { Directive, Renderer, ElementRef } from '@angular/core';
-/** The ink-bar is used to display and animate the line underneath the current active tab label. */
-export var MdInkBar = (function () {
-    function MdInkBar(_renderer, _elementRef) {
+/**
+ * The ink-bar is used to display and animate the line underneath the current active tab label.
+ * \@docs-private
+ */
+export class MdInkBar {
+    /**
+     * @param {?} _renderer
+     * @param {?} _elementRef
+     */
+    constructor(_renderer, _elementRef) {
         this._renderer = _renderer;
         this._elementRef = _elementRef;
     }
     /**
      * Calculates the styles from the provided element in order to align the ink-bar to that element.
-     * @param element
+     * Shows the ink bar if previously set as hidden.
+     * @param {?} element
+     * @return {?}
      */
-    MdInkBar.prototype.alignToElement = function (element) {
+    alignToElement(element) {
+        this.show();
         this._renderer.setElementStyle(this._elementRef.nativeElement, 'left', this._getLeftPosition(element));
         this._renderer.setElementStyle(this._elementRef.nativeElement, 'width', this._getElementWidth(element));
-    };
+    }
+    /**
+     * Shows the ink bar.
+     * @return {?}
+     */
+    show() {
+        this._renderer.setElementStyle(this._elementRef.nativeElement, 'visibility', 'visible');
+    }
+    /**
+     * Hides the ink bar.
+     * @return {?}
+     */
+    hide() {
+        this._renderer.setElementStyle(this._elementRef.nativeElement, 'visibility', 'hidden');
+    }
     /**
      * Generates the pixel distance from the left based on the provided element in string format.
-     * @param element
-     * @returns {string}
+     * @param {?} element
+     * @return {?}
      */
-    MdInkBar.prototype._getLeftPosition = function (element) {
+    _getLeftPosition(element) {
         return element ? element.offsetLeft + 'px' : '0';
-    };
+    }
     /**
      * Generates the pixel width from the provided element in string format.
-     * @param element
-     * @returns {string}
+     * @param {?} element
+     * @return {?}
      */
-    MdInkBar.prototype._getElementWidth = function (element) {
+    _getElementWidth(element) {
         return element ? element.offsetWidth + 'px' : '0';
-    };
-    MdInkBar = __decorate([
-        Directive({
-            selector: 'md-ink-bar',
-        }), 
-        __metadata('design:paramtypes', [Renderer, ElementRef])
-    ], MdInkBar);
-    return MdInkBar;
-}());
-
+    }
+}
+MdInkBar.decorators = [
+    { type: Directive, args: [{
+                selector: 'md-ink-bar, mat-ink-bar',
+                host: {
+                    '[class.mat-ink-bar]': 'true',
+                },
+            },] },
+];
+/**
+ * @nocollapse
+ */
+MdInkBar.ctorParameters = () => [
+    { type: Renderer, },
+    { type: ElementRef, },
+];
+function MdInkBar_tsickle_Closure_declarations() {
+    /** @type {?} */
+    MdInkBar.decorators;
+    /**
+     * @nocollapse
+     * @type {?}
+     */
+    MdInkBar.ctorParameters;
+    /** @type {?} */
+    MdInkBar.prototype._renderer;
+    /** @type {?} */
+    MdInkBar.prototype._elementRef;
+}
 //# sourceMappingURL=ink-bar.js.map

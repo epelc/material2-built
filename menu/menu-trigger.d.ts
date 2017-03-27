@@ -1,6 +1,6 @@
-import { ElementRef, EventEmitter, ViewContainerRef, AfterViewInit, OnDestroy, Renderer } from '@angular/core';
+import { AfterViewInit, ElementRef, EventEmitter, OnDestroy, Renderer, ViewContainerRef } from '@angular/core';
 import { MdMenuPanel } from './menu-panel';
-import { Overlay } from '../core';
+import { Dir, LayoutDirection, Overlay } from '../core';
 /**
  * This directive is intended to be used in conjunction with an md-menu tag.  It is
  * responsible for toggling the display of the provided menu instance.
@@ -10,23 +10,41 @@ export declare class MdMenuTrigger implements AfterViewInit, OnDestroy {
     private _element;
     private _viewContainerRef;
     private _renderer;
+    private _dir;
     private _portal;
     private _overlayRef;
     private _menuOpen;
     private _backdropSubscription;
-    private _openedFromKeyboard;
+    private _positionSubscription;
+    private _openedByMouse;
+    /** @deprecated */
+    _deprecatedMdMenuTriggerFor: MdMenuPanel;
+    /** @deprecated */
+    _deprecatedMatMenuTriggerFor: MdMenuPanel;
+    _matMenuTriggerFor: MdMenuPanel;
+    /** References the menu instance that the trigger is associated with. */
     menu: MdMenuPanel;
+    /** Event emitted when the associated menu is opened. */
     onMenuOpen: EventEmitter<void>;
+    /** Event emitted when the associated menu is closed. */
     onMenuClose: EventEmitter<void>;
-    constructor(_overlay: Overlay, _element: ElementRef, _viewContainerRef: ViewContainerRef, _renderer: Renderer);
+    constructor(_overlay: Overlay, _element: ElementRef, _viewContainerRef: ViewContainerRef, _renderer: Renderer, _dir: Dir);
     ngAfterViewInit(): void;
     ngOnDestroy(): void;
+    /** Whether the menu is open. */
     readonly menuOpen: boolean;
+    /** Toggles the menu between the open and closed states. */
     toggleMenu(): void;
+    /** Opens the menu. */
     openMenu(): void;
+    /** Closes the menu. */
     closeMenu(): void;
+    /** Removes the menu from the DOM. */
     destroyMenu(): void;
+    /** Focuses the menu trigger. */
     focus(): void;
+    /** The text direction of the containing app. */
+    readonly dir: LayoutDirection;
     /**
      * This method ensures that the menu closes when the overlay backdrop is clicked.
      * We do not use first() here because doing so would not catch clicks from within
@@ -47,7 +65,7 @@ export declare class MdMenuTrigger implements AfterViewInit, OnDestroy {
     private _setIsMenuOpen(isOpen);
     /**
      *  This method checks that a valid instance of MdMenu has been passed into
-     *  md-menu-trigger-for.  If not, an exception is thrown.
+     *  mdMenuTriggerFor. If not, an exception is thrown.
      */
     private _checkMenu();
     /**
@@ -61,10 +79,17 @@ export declare class MdMenuTrigger implements AfterViewInit, OnDestroy {
      */
     private _getOverlayConfig();
     /**
+     * Listens to changes in the position of the overlay and sets the correct classes
+     * on the menu based on the new position. This ensures the animation origin is always
+     * correct, even if a fallback position is used for the overlay.
+     */
+    private _subscribeToPositions(position);
+    /**
      * This method builds the position strategy for the overlay, so the menu is properly connected
      * to the trigger.
      * @returns ConnectedPositionStrategy
      */
     private _getPosition();
-    _handleKeydown(event: KeyboardEvent): void;
+    private _cleanUpSubscriptions();
+    _handleMousedown(event: MouseEvent): void;
 }

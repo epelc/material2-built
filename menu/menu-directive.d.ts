@@ -8,11 +8,14 @@ export declare class MdMenu implements AfterContentInit, MdMenuPanel, OnDestroy 
     private _tabSubscription;
     /** Config object to be passed into the menu's ngClass */
     _classList: any;
+    /** Position of the menu in the X axis. */
     positionX: MenuPositionX;
+    /** Position of the menu in the Y axis. */
     positionY: MenuPositionY;
     templateRef: TemplateRef<any>;
     items: QueryList<MdMenuItem>;
-    constructor(posX: MenuPositionX, posY: MenuPositionY);
+    overlapTrigger: boolean;
+    constructor(posX: MenuPositionX, posY: MenuPositionY, deprecatedPosX: MenuPositionX, deprecatedPosY: MenuPositionY);
     ngAfterContentInit(): void;
     ngOnDestroy(): void;
     /**
@@ -22,11 +25,11 @@ export declare class MdMenu implements AfterContentInit, MdMenuPanel, OnDestroy 
      * @param classes list of class names
      */
     classList: string;
+    /** Event emitted when the menu is closed. */
     close: EventEmitter<void>;
     /**
      * Focus the first item in the menu. This method is used by the menu trigger
      * to focus the first item when the menu is opened by the ENTER key.
-     * TODO: internal
      */
     focusFirstItem(): void;
     /**
@@ -40,5 +43,5 @@ export declare class MdMenu implements AfterContentInit, MdMenuPanel, OnDestroy 
      * It's necessary to set position-based classes to ensure the menu panel animation
      * folds out from the correct direction.
      */
-    private _setPositionClasses();
+    setPositionClasses(posX: MenuPositionX, posY: MenuPositionY): void;
 }

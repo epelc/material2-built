@@ -1,8 +1,16 @@
-import { ModuleWithProviders, AfterContentInit, ElementRef, QueryList, EventEmitter, Renderer } from '@angular/core';
+import { AfterContentInit, ElementRef, QueryList, EventEmitter, Renderer, NgZone, OnDestroy } from '@angular/core';
 import { Dir, MdError } from '../core';
+import { FocusTrapFactory } from '../core/a11y/focus-trap';
+import 'rxjs/add/operator/first';
 /** Exception thrown when two MdSidenav are matching the same side. */
 export declare class MdDuplicatedSidenavError extends MdError {
     constructor(align: string);
+}
+/** Sidenav toggle promise result. */
+export declare class MdSidenavToggleResult {
+    type: 'open' | 'close';
+    animationFinished: boolean;
+    constructor(type: 'open' | 'close', animationFinished: boolean);
 }
 /**
  * <md-sidenav> component.
@@ -11,16 +19,20 @@ export declare class MdDuplicatedSidenavError extends MdError {
  *
  * Please refer to README.md for examples on how to use it.
  */
-export declare class MdSidenav implements AfterContentInit {
+export declare class MdSidenav implements AfterContentInit, OnDestroy {
     private _elementRef;
+    private _renderer;
+    private _focusTrapFactory;
+    private _focusTrap;
     /** Alignment of the sidenav (direction neutral); whether 'start' or 'end'. */
     private _align;
-    /** Whether this md-sidenav is part of a valid md-sidenav-layout configuration. */
-    valid: boolean;
-    private _valid;
+    /** Direction which the sidenav is aligned in. */
     align: "start" | "end";
     /** Mode of the sidenav; whether 'over' or 'side'. */
     mode: 'over' | 'push' | 'side';
+    /** Whether the sidenav can be closed with the escape key or not. */
+    disableClose: boolean;
+    private _disableClose;
     /** Whether the sidenav is opened. */
     _opened: boolean;
     /** Event emitted when the sidenav is being opened. Use this to synchronize animations. */
@@ -33,12 +45,21 @@ export declare class MdSidenav implements AfterContentInit {
     onClose: EventEmitter<void>;
     /** Event emitted when the sidenav alignment changes. */
     onAlignChanged: EventEmitter<void>;
+    /** The current toggle animation promise. `null` if no animation is in progress. */
+    private _toggleAnimationPromise;
+    /**
+     * The current toggle animation promise resolution function.
+     * `null` if no animation is in progress.
+     */
+    private _resolveToggleAnimationPromise;
+    readonly isFocusTrapEnabled: boolean;
     /**
      * @param _elementRef The DOM element reference. Used for transition and width calculation.
      *     If not available we do not hook on transitions.
      */
-    constructor(_elementRef: ElementRef);
+    constructor(_elementRef: ElementRef, _renderer: Renderer, _focusTrapFactory: FocusTrapFactory);
     ngAfterContentInit(): void;
+    ngOnDestroy(): void;
     /**
      * Whether the sidenav is opened. We overload this because we trigger an event when it
      * starts or end.
@@ -46,18 +67,24 @@ export declare class MdSidenav implements AfterContentInit {
     opened: boolean;
     /** Open this sidenav, and return a Promise that will resolve when it's fully opened (or get
      * rejected if it didn't). */
-    open(): Promise<void>;
+    open(): Promise<MdSidenavToggleResult>;
     /**
      * Close this sidenav, and return a Promise that will resolve when it's fully closed (or get
      * rejected if it didn't).
      */
-    close(): Promise<void>;
+    close(): Promise<MdSidenavToggleResult>;
     /**
      * Toggle this sidenav. This is equivalent to calling open() when it's already opened, or
      * close() when it's closed.
-     * @param isOpen
+     * @param isOpen Whether the sidenav should be open.
+     * @returns Resolves with the result of whether the sidenav was opened or closed.
      */
-    toggle(isOpen?: boolean): Promise<void>;
+    toggle(isOpen?: boolean): Promise<MdSidenavToggleResult>;
+    /**
+     * Handles the keyboard events.
+     * @docs-private
+     */
+    handleKeydown(event: KeyboardEvent): void;
     /**
      * When transition has finished, set the internal state for classes and emit the proper event.
      * The event passed is actually of type TransitionEvent, but that type is not available in
@@ -73,27 +100,26 @@ export declare class MdSidenav implements AfterContentInit {
     readonly _modeOver: boolean;
     readonly _modePush: boolean;
     readonly _width: any;
-    private _transition;
-    private _openPromise;
-    private _openPromiseResolve;
-    private _openPromiseReject;
-    private _closePromise;
-    private _closePromiseResolve;
-    private _closePromiseReject;
+    private _elementFocusedBeforeSidenavWasOpened;
 }
 /**
- * <md-sidenav-layout> component.
+ * <md-sidenav-container> component.
  *
  * This is the parent component to one or two <md-sidenav>s that validates the state internally
  * and coordinates the backdrop and content styling.
  */
-export declare class MdSidenavLayout implements AfterContentInit {
+export declare class MdSidenavContainer implements AfterContentInit {
     private _dir;
     private _element;
     private _renderer;
+    private _ngZone;
     _sidenavs: QueryList<MdSidenav>;
+    /** The sidenav child with the `start` alignment. */
     readonly start: MdSidenav;
+    /** The sidenav child with the `end` alignment. */
     readonly end: MdSidenav;
+    /** Event emitted when the sidenav backdrop is clicked. */
+    backdropClick: EventEmitter<void>;
     /** The sidenav at the start/end alignment, independent of direction. */
     private _start;
     private _end;
@@ -105,12 +131,14 @@ export declare class MdSidenavLayout implements AfterContentInit {
      */
     private _left;
     private _right;
-    constructor(_dir: Dir, _element: ElementRef, _renderer: Renderer);
+    /** Whether to enable open/close trantions. */
+    _enableTransitions: boolean;
+    constructor(_dir: Dir, _element: ElementRef, _renderer: Renderer, _ngZone: NgZone);
     ngAfterContentInit(): void;
     /**
-     * Subscribes to sidenav events in order to set a class on the main layout element when the
-     * sidenav is open and the backdrop is visible. This ensures any overflow on the layout element is
-     * properly hidden.
+     * Subscribes to sidenav events in order to set a class on the main container element when the
+     * sidenav is open and the backdrop is visible. This ensures any overflow on the container element
+     * is properly hidden.
      */
     private _watchSidenavToggle(sidenav);
     /**
@@ -118,12 +146,11 @@ export declare class MdSidenavLayout implements AfterContentInit {
      * changes.
      */
     private _watchSidenavAlign(sidenav);
-    /** Toggles the 'md-sidenav-opened' class on the main 'md-sidenav-layout' element. */
-    private _setLayoutClass(sidenav, bool);
-    /** Sets the valid state of the drawers. */
-    private _setDrawersValid(valid);
+    /** Toggles the 'mat-sidenav-opened' class on the main 'md-sidenav-container' element. */
+    private _setContainerClass(sidenav, bool);
     /** Validate the state of the sidenav children components. */
     private _validateDrawers();
+    _onBackdropClicked(): void;
     _closeModalSidenav(): void;
     _isShowingBackdrop(): boolean;
     private _isSidenavOpen(side);
@@ -153,7 +180,4 @@ export declare class MdSidenavLayout implements AfterContentInit {
         marginRight: string;
         transform: string;
     };
-}
-export declare class MdSidenavModule {
-    static forRoot(): ModuleWithProviders;
 }

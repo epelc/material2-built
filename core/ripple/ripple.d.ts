@@ -1,5 +1,14 @@
-import { ModuleWithProviders, ElementRef, OnChanges, OnDestroy, OnInit, SimpleChange } from '@angular/core';
-export declare class MdRipple implements OnInit, OnDestroy, OnChanges {
+import { ElementRef, NgZone, OnChanges, SimpleChanges, OnDestroy, OpaqueToken } from '@angular/core';
+import { RippleConfig } from './ripple-renderer';
+import { ViewportRuler } from '../overlay/position/viewport-ruler';
+import { RippleRef } from './ripple-ref';
+/** OpaqueToken that can be used to specify the global ripple options. */
+export declare const MD_RIPPLE_GLOBAL_OPTIONS: OpaqueToken;
+export declare type RippleGlobalOptions = {
+    disabled?: boolean;
+    baseSpeedFactor?: number;
+};
+export declare class MdRipple implements OnChanges, OnDestroy {
     /**
      * The element that triggers the ripple when click events are received. Defaults to the
      * directive's host element.
@@ -12,7 +21,7 @@ export declare class MdRipple implements OnInit, OnDestroy, OnChanges {
     centered: boolean;
     /**
      * Whether click events will not trigger the ripple. It can still be triggered by manually
-     * calling start() and end().
+     * calling createRipple()
      */
     disabled: boolean;
     /**
@@ -20,56 +29,28 @@ export declare class MdRipple implements OnInit, OnDestroy, OnChanges {
      * will be the distance from the center of the ripple to the furthest corner of the host element's
      * bounding rectangle.
      */
-    maxRadius: number;
+    radius: number;
     /**
      * If set, the normal duration of ripple animations is divided by this value. For example,
      * setting it to 0.5 will cause the animations to take twice as long.
+     * A changed speedFactor will not modify the fade-out duration of the ripples.
      */
     speedFactor: number;
     /** Custom color for ripples. */
     color: string;
-    /** Custom color for the ripple background. */
-    backgroundColor: string;
-    /** Whether the ripple background will be highlighted to indicated a focused state. */
-    focused: boolean;
     /** Whether foreground ripples should be visible outside the component's bounds. */
     unbounded: boolean;
+    /** Renderer for the ripple DOM manipulations. */
     private _rippleRenderer;
-    constructor(_elementRef: ElementRef);
-    /** TODO: internal */
-    ngOnInit(): void;
-    /** TODO: internal */
+    /** Options that are set globally for all ripples. */
+    private _globalOptions;
+    constructor(elementRef: ElementRef, ngZone: NgZone, ruler: ViewportRuler, globalOptions: any);
+    ngOnChanges(changes: SimpleChanges): void;
     ngOnDestroy(): void;
-    /** TODO: internal */
-    ngOnChanges(changes: {
-        [propertyName: string]: SimpleChange;
-    }): void;
-    /**
-     * Responds to the start of a ripple animation trigger by fading the background in.
-     */
-    start(): void;
-    /**
-     * Responds to the end of a ripple animation trigger by fading the background out, and creating a
-     * foreground ripple that expands from the event location (or from the center of the element if
-     * the "centered" property is set or forceCenter is true).
-     */
-    end(left: number, top: number, forceCenter?: boolean): void;
-    private _rippleTransitionEnded(ripple, event);
-    /**
-     * Called when the trigger element receives a mousedown event. Starts the ripple animation by
-     * fading in the background.
-     */
-    private _mouseDown(event);
-    /**
-     * Called when the trigger element receives a click event. Creates a foreground ripple and
-     * runs its animation.
-     */
-    private _click(event);
-    /**
-     * Called when the trigger element receives a mouseleave event. Fades out the background.
-     */
-    private _mouseLeave(event);
-}
-export declare class MdRippleModule {
-    static forRoot(): ModuleWithProviders;
+    /** Launches a manual ripple at the specified position. */
+    launch(pageX: number, pageY: number, config?: RippleConfig): RippleRef;
+    /** Fades out all currently showing ripple elements. */
+    fadeOutAll(): void;
+    /** Ripple configuration from the directive's input values. */
+    readonly rippleConfig: RippleConfig;
 }
