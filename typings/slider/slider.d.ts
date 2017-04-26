@@ -12,7 +12,7 @@ export declare const MD_SLIDER_VALUE_ACCESSOR: any;
 export declare class MdSliderChange {
     /** The MdSlider that changed. */
     source: MdSlider;
-    /** Thew new value of the source slider. */
+    /** The new value of the source slider. */
     value: number;
 }
 /**
@@ -57,6 +57,7 @@ export declare class MdSlider implements ControlValueAccessor, OnDestroy {
     /** Whether the slider is vertical. */
     vertical: any;
     private _vertical;
+    color: 'primary' | 'accent' | 'warn';
     /** Event emitted when the slider value has changed. */
     change: EventEmitter<MdSliderChange>;
     /** Event emitted when the slider thumb moves. */

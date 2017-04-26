@@ -28,7 +28,7 @@ export declare class MdSidenav implements AfterContentInit, OnDestroy {
     private _align;
     /** Direction which the sidenav is aligned in. */
     align: "start" | "end";
-    /** Mode of the sidenav; whether 'over' or 'side'. */
+    /** Mode of the sidenav; one of 'over', 'push' or 'side'. */
     mode: 'over' | 'push' | 'side';
     /** Whether the sidenav can be closed with the escape key or not. */
     disableClose: boolean;
@@ -135,6 +135,10 @@ export declare class MdSidenavContainer implements AfterContentInit {
     _enableTransitions: boolean;
     constructor(_dir: Dir, _element: ElementRef, _renderer: Renderer, _ngZone: NgZone);
     ngAfterContentInit(): void;
+    /** Calls `open` of both start and end sidenavs */
+    open(): Promise<MdSidenavToggleResult[]>;
+    /** Calls `close` of both start and end sidenavs */
+    close(): Promise<MdSidenavToggleResult[]>;
     /**
      * Subscribes to sidenav events in order to set a class on the main container element when the
      * sidenav is open and the backdrop is visible. This ensures any overflow on the container element

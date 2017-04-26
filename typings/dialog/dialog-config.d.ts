@@ -12,9 +12,19 @@ export interface DialogPosition {
  * Configuration for opening a modal dialog with the MdDialog service.
  */
 export declare class MdDialogConfig {
+    /**
+     * Where the attached component should live in Angular's *logical* component tree.
+     * This affects what is available for injection and the change detection order for the
+     * component instantiated inside of the dialog. This does not affect where the dialog
+     * content will be rendered.
+     */
     viewContainerRef?: ViewContainerRef;
     /** The ARIA role of the dialog element. */
     role?: DialogRole;
+    /** Whether the dialog has a backdrop. */
+    hasBackdrop?: boolean;
+    /** Custom class for the backdrop, */
+    backdropClass?: string;
     /** Whether the user can use escape or clicking outside to close a modal. */
     disableClose?: boolean;
     /** Width of the dialog. */

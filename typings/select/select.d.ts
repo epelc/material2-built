@@ -1,4 +1,4 @@
-import { AfterContentInit, ElementRef, EventEmitter, OnDestroy, QueryList, Renderer, ChangeDetectorRef } from '@angular/core';
+import { AfterContentInit, ElementRef, EventEmitter, OnDestroy, QueryList, Renderer2, ChangeDetectorRef, OnInit } from '@angular/core';
 import { MdOption, MdOptionSelectionChange } from '../core/option/option';
 import { FocusKeyManager } from '../core/a11y/focus-key-manager';
 import { Dir } from '../core/rtl/dir';
@@ -7,6 +7,7 @@ import { ControlValueAccessor, NgControl } from '@angular/forms';
 import { ConnectedOverlayDirective } from '../core/overlay/overlay-directives';
 import { ViewportRuler } from '../core/overlay/position/viewport-ruler';
 import { SelectionModel } from '../core/selection/selection';
+import { ScrollDispatcher } from '../core/overlay/scroll/scroll-dispatcher';
 import 'rxjs/add/observable/merge';
 import 'rxjs/add/operator/startWith';
 /**
@@ -58,11 +59,12 @@ export declare class MdSelectChange {
 }
 /** Allowed values for the floatPlaceholder option. */
 export declare type MdSelectFloatPlaceholderType = 'always' | 'never' | 'auto';
-export declare class MdSelect implements AfterContentInit, ControlValueAccessor, OnDestroy {
+export declare class MdSelect implements AfterContentInit, OnDestroy, OnInit, ControlValueAccessor {
     private _element;
     private _renderer;
     private _viewportRuler;
     private _changeDetectorRef;
+    private _scrollDispatcher;
     private _dir;
     _control: NgControl;
     /** Whether or not the overlay panel is open. */
@@ -73,6 +75,8 @@ export declare class MdSelect implements AfterContentInit, ControlValueAccessor,
     private _changeSubscription;
     /** Subscription to tab events while overlay is focused. */
     private _tabSubscription;
+    /** Subscription to global scrolled events while the select is open. */
+    private _scrollSubscription;
     /** Whether filling out the select is required in the form.  */
     private _required;
     /** Whether the select is disabled.  */
@@ -89,6 +93,8 @@ export declare class MdSelect implements AfterContentInit, ControlValueAccessor,
     private _placeholderState;
     /** Tab index for the element. */
     private _tabIndex;
+    /** Theme color for the component. */
+    private _color;
     /**
      * The width of the trigger. Must be saved to set the min width of the overlay panel
      * and the width of the selected value.
@@ -111,12 +117,6 @@ export declare class MdSelect implements AfterContentInit, ControlValueAccessor,
     _transformOrigin: string;
     /** Whether the panel's animation is done. */
     _panelDoneAnimating: boolean;
-    /**
-     * The x-offset of the overlay panel in relation to the trigger's top start corner.
-     * This must be adjusted to align the selected option text over the trigger text when
-     * the panel opens. Will change based on LTR or RTL text direction.
-     */
-    _offsetX: number;
     /**
      * The y-offset of the overlay panel in relation to the trigger's top start corner.
      * This must be adjusted to align the selected option text over the trigger text.
@@ -154,6 +154,12 @@ export declare class MdSelect implements AfterContentInit, ControlValueAccessor,
     private _floatPlaceholder;
     /** Tab index for the select element. */
     tabIndex: number;
+    /** Aria label of the select. If not specified, the placeholder will be used as label. */
+    ariaLabel: string;
+    /** Input that can be used to specify the `aria-labelledby` attribute. */
+    ariaLabelledby: string;
+    /** Theme color for the component. */
+    color: string;
     /** Combined stream of all of the child options' change events. */
     readonly optionSelectionChanges: Observable<MdOptionSelectionChange>;
     /** Event emitted when the select has been opened. */
@@ -162,7 +168,8 @@ export declare class MdSelect implements AfterContentInit, ControlValueAccessor,
     onClose: EventEmitter<void>;
     /** Event emitted when the selected value has been changed by the user. */
     change: EventEmitter<MdSelectChange>;
-    constructor(_element: ElementRef, _renderer: Renderer, _viewportRuler: ViewportRuler, _changeDetectorRef: ChangeDetectorRef, _dir: Dir, _control: NgControl, tabIndex: string);
+    constructor(_element: ElementRef, _renderer: Renderer2, _viewportRuler: ViewportRuler, _changeDetectorRef: ChangeDetectorRef, _scrollDispatcher: ScrollDispatcher, _dir: Dir, _control: NgControl, tabIndex: string);
+    ngOnInit(): void;
     ngAfterContentInit(): void;
     ngOnDestroy(): void;
     /** Toggles the overlay panel open or closed. */
@@ -209,10 +216,11 @@ export declare class MdSelect implements AfterContentInit, ControlValueAccessor,
     readonly triggerValue: string;
     /** Whether the element is in RTL mode. */
     _isRtl(): boolean;
-    /** The width of the trigger element. This is necessary to match
+    /**
+     * Sets the width of the trigger element. This is necessary to match
      * the overlay width to the trigger width.
      */
-    _getWidth(): number;
+    private _setTriggerWidth();
     /** Ensures the panel opens if activated by the keyboard. */
     _handleKeydown(event: KeyboardEvent): void;
     /**
@@ -231,11 +239,15 @@ export declare class MdSelect implements AfterContentInit, ControlValueAccessor,
      */
     _onBlur(): void;
     /**
+     * Callback that is invoked when the overlay panel has been attached.
+     */
+    _onAttached(): void;
+    /**
      * Sets the scroll position of the scroll container. This must be called after
      * the overlay pane is attached or the scroll container element will not yet be
      * present in the DOM.
      */
-    _setScrollTop(): void;
+    private _setScrollTop();
     /**
      * Sets the selected option based on a value. If no option can be
      * found with the designated value, the select trigger is cleared.
@@ -274,7 +286,6 @@ export declare class MdSelect implements AfterContentInit, ControlValueAccessor,
     /**
      * Sets the `multiple` property on each option. The promise is necessary
      * in order to avoid Angular errors when modifying the property after init.
-     * TODO: there should be a better way of doing this.
      */
     private _setOptionMultiple();
     /**
@@ -310,12 +321,22 @@ export declare class MdSelect implements AfterContentInit, ControlValueAccessor,
      * Determines the CSS `visibility` of the placeholder element.
      */
     _getPlaceholderVisibility(): 'visible' | 'hidden';
+    /** Returns the aria-label of the select component. */
+    readonly _ariaLabel: string;
+    /**
+     * Sets the x-offset of the overlay panel in relation to the trigger's top start corner.
+     * This must be adjusted to align the selected option text over the trigger text when
+     * the panel opens. Will change based on LTR or RTL text direction. Note that the offset
+     * can't be calculated until the panel has been attached, because we need to know the
+     * content width in order to constrain the panel within the viewport.
+     */
+    private _calculateOverlayOffsetX();
     /**
      * Calculates the y-offset of the select's overlay panel in relation to the
      * top start corner of the trigger. It has to be adjusted in order for the
      * selected option to be aligned over the trigger when the panel opens.
      */
-    private _calculateOverlayOffset(selectedIndex, scrollBuffer, maxScroll);
+    private _calculateOverlayOffsetY(selectedIndex, scrollBuffer, maxScroll);
     /**
      * Checks that the attempted overlay position will fit within the viewport.
      * If it will not fit, tries to adjust the scroll position and the associated
